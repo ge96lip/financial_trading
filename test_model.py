@@ -77,3 +77,24 @@ if __name__ == "__main__":
         main(model_name, data_path)
     else:
         print("Please provide a model name and data_path as a command-line argument (e.g., 'XGB' or 'Ridge', 'example_prices.csv').")
+        
+        
+        
+# TODO: 
+"""
+For random forest try: 
+# try 50, 100, 200 in hyperparameter tuning
+# try None, 5, 10, 20
+# try 2, 5, 10
+# try 1, 2, 4
+
+for MLP try:
+ # try (50,), (100,), (50,50), (100,50)
+activation='relu',           # or 'tanh'
+solver='adam',               # or 'sgd'
+alpha=0.001,                 # try 0.0001, 0.001, 0.01
+learning_rate_init=0.001,      # try 0.001, 0.01
+max_iter=500
+            ),
+
+"""
