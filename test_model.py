@@ -11,7 +11,7 @@ from data_analysis import load_data
 def test_hyperparameters(model_name, ret, prices):
     
     def evaluate_model(model_constructor, model_name):
-        pos = generate_model_positions(
+        pos, _ = generate_model_positions(
             ret,
             model_constructor=model_constructor,
             model_name=model_name,
@@ -68,13 +68,12 @@ def test_hyperparameters(model_name, ret, prices):
 def main(name, data_path): 
     prices = load_data(data_path)
     ret = prices.diff()
-    test_hyperparameters(model_name, ret, prices)
+    test_hyperparameters(name, ret, prices)
         
 if __name__ == "__main__":
-    
-    if len(sys.argv) > 2:
+    if len(sys.argv) > 1:
         model_name = sys.argv[1]
-        data_path = sys.argv[2]
+        data_path = sys.argv[2] if len(sys.argv) > 2 else 'example_prices.csv'
         main(model_name, data_path)
     else:
-        print("Please provide a model name as a command-line argument (e.g., 'XGB' or 'Ridge').")
+        print("Please provide a model name and data_path as a command-line argument (e.g., 'XGB' or 'Ridge', 'example_prices.csv').")
