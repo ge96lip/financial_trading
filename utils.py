@@ -1,4 +1,3 @@
-
 # foward looking bias check
 
 def forward_looking_bias_model(ret, pos_func, **kwargs):
@@ -23,7 +22,34 @@ def forward_looking_bias_model(ret, pos_func, **kwargs):
         return False
 
 
-# GARCH model 
+
+# check if short selling is done correctly
+def check_short_selling(pos, model_ret):
+    """
+    Check if short selling is done correctly by comparing negative positions
+    with their respective returns to ensure that the sign of the return is positive.
+
+    pos: array of positions
+    model_ret: array of returns ((pos*ret).dropna(how='all')) if using returns calculated as prices.diff()
+    """
+    # MAKE SURE THAT RETURNS ARE SHIFTED BY 2 DAYS AHEAD, OTHERWISE APPLY
+    # model_ret = model_ret.shift(2)
+
+    num_rows = min(pos.shape[0], model_ret.shape[0])
+    num_cols = min(pos.shape[1], model_ret.shape[1])
+
+    counter = 0 
+
+    for i in range(num_rows):
+        for j in range(num_cols):
+            if pos[i, j] < 0 and ret[i, j] > 0:
+                print(f"Short selling is done correctly at {counter} position(s)")
+                counter += 1
+                if counter > 10: # just for fun, look to see that there are 
+                    return
+
+
+
 
 
 # @Jannik: 

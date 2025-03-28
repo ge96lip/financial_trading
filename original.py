@@ -36,6 +36,8 @@ def main():
     figures = (calc_key_figures(pos, prices))
     print(figures)
     forward_looking_bias(ret)
+
+
     
 if __name__ == "__main__":
     main()
