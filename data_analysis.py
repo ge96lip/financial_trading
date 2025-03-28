@@ -41,6 +41,8 @@ def missing_data(prices, critical_assets=None, mask_days_nan=False):
             prices_cleaned = prices[day_coverage >= 0.9]  # keep days with ≥90% data
         
         return prices_cleaned
+    else: 
+        return prices
 
 def too_many_nan(prices, critical_assets=None): 
     """
@@ -76,12 +78,16 @@ def too_many_nan(prices, critical_assets=None):
     return prices
 
 def constant_prices(prices):
+    # Ensure the input is not None
+    if prices is None:
+        raise ValueError("Input 'prices' is None. Please provide a valid DataFrame.")
+
     # Constant Columns / Zero Variance
     zero_var_cols = prices.columns[prices.nunique() <= 1]
     print("Constant value columns:\n", zero_var_cols.tolist())
-    if zero_var_cols.any():
-        # drop constant columns: 
-        variable_assets = prices.loc[:, prices.nunique() > 1]
+    if not zero_var_cols.empty:
+        # Drop constant columns
+        prices = prices.drop(columns=zero_var_cols)
         print("Dropped constant value columns.")
     return prices
 
@@ -100,6 +106,7 @@ def clean_outliers(prices, threshold = 0.3, option = 0, remove_spikes = False):
         returns_clipped = returns.clip(lower=-0.10, upper=0.10)
         prices_cleaned = (1 + returns_clipped).cumprod() * prices.iloc[0]
         
+        return prices_cleaned
     elif option == 2:
         # Option 2: Flag or Exclude Outliers
         spike_mask = returns.abs() > 0.3
@@ -114,9 +121,11 @@ def clean_outliers(prices, threshold = 0.3, option = 0, remove_spikes = False):
             returns_cleaned = returns.mask(spike_mask)
             prices_cleaned = (1 + returns_cleaned).cumprod() * prices.iloc[0]
             
-    return prices_cleaned
+        return prices_cleaned
+    else: 
+        return prices
 
-def prepare_data(path):
+def load_data(path = 'example_prices.csv'):
     """
     Reads and processes a CSV file containing price data.
 
@@ -131,8 +140,10 @@ def prepare_data(path):
         pandas.DataFrame: A cleaned DataFrame with indexed dates and 
         price information for various assets.
     """
-    prices = pd.read_csv('example_prices.csv',index_col='dates',parse_dates=True)
+    print("Reading data from:", path)
+    prices = pd.read_csv(path, index_col='dates',parse_dates=True)
     
+    print("Shape of data:", prices.shape)
     # Dublicated Index 
     prices = clean_dublicated_indices(prices)
     

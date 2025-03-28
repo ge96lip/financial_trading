@@ -48,7 +48,7 @@ def walk_forward_prediction(ret_series, model, start_train=200, trend_window=50,
         pred = current_model.predict(test_X)[0]
         predictions.iloc[i] = pred
         
-    return predictions
+    return predictions, current_model
   
   
 def generate_model_positions(ret, model_constructor, model_name, trend_window=50, vol_window=100,
@@ -66,7 +66,7 @@ def generate_model_positions(ret, model_constructor, model_name, trend_window=50
         print(f"Generating positions for {asset} using {model_name}")
         # Create a new instance for each asset
         model = model_constructor()
-        predictions = walk_forward_prediction(ret[asset], model,
+        predictions, model_trained = walk_forward_prediction(ret[asset], model,
                                               start_train=start_train,
                                               trend_window=trend_window,
                                               vol_window=vol_window,
@@ -79,4 +79,33 @@ def generate_model_positions(ret, model_constructor, model_name, trend_window=50
     # Risk adjust positions:
     model_risk = (pos.shift(2) * ret).dropna(how='all').sum(axis=1).rolling(risk_window, min_periods=20).std()
     pos_adjusted = pos.div(model_risk, axis=0)
+    return pos_adjusted, model_trained
+  
+  
+def generate_model_positions_pretrained(ret, model, trend_window=50, vol_window=100,
+                                        risk_window=100, smoothing_window=5, min_periods=20):
+    """
+    Generates risk-adjusted positions using an already pre-trained model.
+    The method computes positions based on the model's predictions without retraining.
+    """
+    pos = pd.DataFrame(index=ret.index, columns=ret.columns, dtype=float)
+    
+    for asset in ret.columns:
+        print(f"Generating positions for {asset} using pre-trained model")
+        features, _ = get_features_and_target(ret[asset], trend_window, vol_window)
+        
+        # Use the pre-trained model directly to predict for every time step.
+        predictions = pd.Series(index=features.index, dtype=float)
+        for i in range(len(features)):
+            test_X = features.iloc[[i]]
+            predictions.iloc[i] = model.predict(test_X)[0]
+        
+        # Smooth the predictions and take the sign as final signal.
+        predictions_smoothed = predictions.rolling(window=smoothing_window, min_periods=1).mean()
+        pos[asset] = np.sign(predictions_smoothed)
+    
+    # Apply two-day lag when calculating risk-adjusted positions.
+    model_risk = (pos.shift(2) * ret).dropna(how='all').sum(axis=1).rolling(risk_window, min_periods=min_periods).std()
+    pos_adjusted = pos.div(model_risk, axis=0)
+    
     return pos_adjusted
