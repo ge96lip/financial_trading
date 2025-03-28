@@ -71,7 +71,8 @@ def main(name, data_path):
     test_hyperparameters(model_name, ret, prices)
         
 if __name__ == "__main__":
-    if len(sys.argv) > 1:
+    
+    if len(sys.argv) > 2:
         model_name = sys.argv[1]
         data_path = sys.argv[2]
         main(model_name, data_path)
