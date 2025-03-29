@@ -12,7 +12,7 @@ from sklearn.linear_model import LogisticRegression, Ridge
 import sys
 from utils import forward_looking_bias_model, test_hindsight_bias_using_target
 from model_utils import generate_model_positions
-from data_analysis import load_data, load_close_prices, load_full_prices, load_macro_data
+from data_analysis import load_data, load_full_prices, load_macro_data
 #from catboost import CatBoostRegressor
 
 

@@ -187,8 +187,10 @@ def full_pipeline(start_train=200, retrain_frequency=5):
     pos = pd.DataFrame(index=merged_df.index, columns=close_df.columns, dtype=float)
     models_trained = {}  # Optional: store last trained model per asset
     
-    # Loop over each asset (using close_df's columns)
-    for asset in close_df.columns:
+    # Test for only 3 assets
+    cols = ['water', 'io_bonds', 'titan_stocks']
+    for asset in cols:
+    #for asset in close_df.columns:
         print(f"Generating positions for {asset} using model {model_constructor.__name__}")
         # Build features and target for this asset
         features, target = get_enhanced_features(merged_df, asset)
