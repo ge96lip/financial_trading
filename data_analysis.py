@@ -171,41 +171,51 @@ def clean_dublicated_indices(df):
     df = df[~df.index.duplicated()]
     return df
 
-def load_close_prices(path='close_prices_insample.csv'):
-    print("Loading closing prices from:", path)
-    df = pd.read_csv(path, index_col='AsOfDate', parse_dates=True)
-    df = clean_dublicated_indices(df)
-    df.sort_index(inplace=True)
-    return df
-
 def load_full_prices(path='prices_insample.csv'):
     """
-    Loads prices_insample.csv, which has a two-row header:
-    Row 0: Asset name repeated
-    Row 1: Indicator (Open, High, Low, Close)
-    Then from Row 2 onward, the data.
-    
-    We parse it into a multi-index for columns and then flatten the columns.
-    We also parse the first column as the date index.
+    Loads prices_insample.csv, which has a two-row header.
     """
     print("Loading multi-header full price data from:", path)
-    
-    # Note header=[0,1] means the first two rows are used for column names
-    # index_col=0 means the first column is used as the row index (dates)
     df = pd.read_csv(path, header=[0,1], index_col=0, parse_dates=True)
-    
-    # Flatten the multi-index columns into single-level
-    # e.g., ("ganymede_bonds", "Open") → "ganymede_bonds_Open"
     df.columns = [f"{upper}_{lower}" for upper, lower in df.columns]
-    
-    # Ensure the index is sorted
     df.sort_index(inplace=True)
-    
-    print(f"Loaded {df.shape[0]} rows and {df.shape[1]} columns from {path}")
     return df
 
 def load_macro_data(path='macro_data_insample.csv'):
+    """
+    Loads macro_data_insample.csv, which has a two-row header:
+      Row 0: 'gdp' or 'cpi'
+      Row 1: planet names ('titan', 'io', 'callisto', 'europa', 'ganymede')
+    The first column holds the dates (no explicit 'AsOfDate' label).
+    We parse them as the DataFrame's index.
+    
+    The final columns become: 'gdp_titan', 'gdp_io', 'gdp_callisto', 'gdp_europa', 'gdp_ganymede',
+                             'cpi_titan', 'cpi_io', 'cpi_callisto', 'cpi_europa', 'cpi_ganymede'
+    """
     print("Loading macro data from:", path)
-    df = pd.read_csv(path, index_col='AsOfDate', parse_dates=True)
+    # header=[0,1] -> first two rows are column headers (multi-level)
+    # index_col=0  -> first column is the date index
+    # parse_dates=True -> parse that first column as dates
+    df = pd.read_csv(path, header=[0,1], index_col=0, parse_dates=True)
+    
+    # Flatten the two-level columns into single-level: ('gdp','titan') => 'gdp_titan'
+    df.columns = [f"{upper}_{lower}" for (upper, lower) in df.columns]
+    
+    # Sort the index to ensure chronological order
     df.sort_index(inplace=True)
+    
+    print(f"Loaded {df.shape[0]} rows and {df.shape[1]} columns from {path}.")
+    print("Columns:", df.columns.tolist())
     return df
+
+###########################
+# 2. Merging Data
+###########################
+
+def merge_datasets(full_df, macro_df):
+    """
+    Merges the multi-header price data with macro data on date index.
+    """
+    merged = full_df.join(macro_df, how='left')
+    merged.fillna(method='ffill', inplace=True)  # forward-fill macro data
+    return merged
