@@ -34,12 +34,13 @@ vol_window=100
 risk_window=100
 
 # calculate risk adjusted positions
-vol = np.sqrt((ret**2).rolling(window=vol_window, min_periods=vol_window//2).sum())
+loaded_vols = pickle.load(open('vols.pkl', 'rb'))
 # calculate signal
 sig = np.sign(ret.rolling(window=trend_window).sum())
 # scale with inverse vol to get pos
-pos = sig/vol
+pos = sig/loaded_vols
 model_risk = rolling_portfolio_vol(pos, ret, risk_window)
+
 
 # save model_risk in pickle
 with open('model_risk.pkl', 'wb') as f:
@@ -55,13 +56,23 @@ pos_adjusted = pos.div(model_risk, axis=0)
 
 
 # calculate risk adjusted positions SHORT VERSION to check for forward looking bias
-vol_short = np.sqrt((ret.iloc[:-20]**2).rolling(window=vol_window, min_periods=vol_window//2).sum())
+loaded_vols_short = pickle.load(open('vols_short.pkl', 'rb'))
 # calculate signal
-sig_short = np.sign(ret.iloc[:-20].rolling(window=trend_window).sum())
+sig_short = np.sign(ret.iloc[:-200].rolling(window=trend_window).sum())
 # scale with inverse vol to get pos
-pos_short = sig_short/vol_short
-model_risk_short = rolling_portfolio_vol(pos_short, ret.iloc[:-20], risk_window)
+pos_short = sig_short/loaded_vols_short
+model_risk_short = rolling_portfolio_vol(pos_short, ret.iloc[:-200], risk_window)
 pos_adjusted_short = pos_short.div(model_risk_short, axis=0)
+
+
+# save model_risk_short in pickle
+with open('model_risk_short.pkl', 'wb') as f:
+    pickle.dump(model_risk_short, f)
+
+with open('model_risk_short.pkl', 'rb') as f:
+    model_risk_short = pickle.load(f)
+
+
 
 
 
