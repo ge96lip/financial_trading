@@ -5,7 +5,7 @@ from sklearn.linear_model import Ridge
 from model_utils import generate_model_positions
 from evaluation import calc_key_figures
 from xgboost import XGBRegressor
-from data_analysis import load_data
+from data_analysis import prepare_data
 
 
 def test_hyperparameters(model_name, ret, prices):
@@ -66,7 +66,7 @@ def test_hyperparameters(model_name, ret, prices):
         print(f"Score: {score:.4f} | Params: {model_params}")
         
 def main(name, data_path): 
-    prices = load_data(data_path)
+    prices = prepare_data(data_path)
     ret = prices.diff()
     test_hyperparameters(name, ret, prices)
         

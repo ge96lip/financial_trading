@@ -125,7 +125,7 @@ def clean_outliers(prices, threshold = 0.3, option = 0, remove_spikes = False):
     else: 
         return prices
 
-def load_data(path = 'example_prices.csv'):
+def prepare_data(path = 'example_prices.csv'):
     """
     Reads and processes a CSV file containing price data.
 
