@@ -21,7 +21,7 @@ def forecast_volatility(lookback, returns_df: pd.DataFrame) -> pd.DataFrame:
             hist_returns = returns_df[asset].iloc[t - lookback:t]
             try:
                 model = arch_model(hist_returns, vol='GARCH', p=1, q=1, rescale=False)
-                res = model.fit(disp='off')
+                res = model.fit(disp='off', options={'maxiter': 1000}, method='BFGS')
                 forecast = res.forecast(horizon=1)
                 vol = np.sqrt(forecast.variance.values[-1, 0])
             except:
@@ -30,7 +30,7 @@ def forecast_volatility(lookback, returns_df: pd.DataFrame) -> pd.DataFrame:
     return vol_forecasts.astype(float)
 
 
-prices = pd.read_csv('example_prices.csv',index_col='dates',parse_dates=True)
+prices = pd.read_csv('close_prices_insample.csv',index_col='AsOfDate',parse_dates=True)
 ret = prices.diff()
 
 # WARNING: THESE TAKE A LONG TIME TO RUN
@@ -38,14 +38,25 @@ ret = prices.diff()
 # vols_short = forecast_volatility(lookback=200, returns_df=ret.iloc[:-200])
 
 
-# I HAVE SAVED VOLS (NOT SHORT) SO WE DONT HAVE TO RUN THE FORECASTING EVERY TIME
-# Save the variable to a file
+# # I HAVE SAVED VOLS (NOT SHORT) SO WE DONT HAVE TO RUN THE FORECASTING EVERY TIME
+# # Save the variable to a file
 # with open('vols.pkl', 'wb') as f:
 #     pickle.dump(vols, f)
+
+# with open('vols_short.pkl', 'wb') as f:
+#     pickle.dump(vols_short, f)
 
 # Later, load the variable from the file
 with open('vols.pkl', 'rb') as f:
     loaded_vols = pickle.load(f)
+
+with open('vols_short.pkl', 'rb') as f:
+    loaded_vols_short = pickle.load(f)
+
+
+
+# add loaded_vols to csv
+# loaded_vols.to_csv('garch_vols.csv')
 
 
 trend_window=50
@@ -54,13 +65,13 @@ sig_short = np.sign(ret.iloc[:-200].rolling(window=trend_window).sum())
 
 
 pos = sig/loaded_vols
-# pos_short = sig_short/vols_short
+pos_short = sig_short/loaded_vols_short
 
-# temp = (pos-pos_short).abs().sum()
-# if temp.sum() > 0:
-#     print('Forward looking bias detected!')
-# else:
-#     print('No forward looking bias detected!')
+temp = (pos-pos_short).abs().sum()
+if temp.sum() > 0:
+    print('Forward looking bias detected!')
+else:
+    print('No forward looking bias detected!')
 
 
 # OBS IT SAID NO FORWARD LOOKING BIAS
@@ -70,11 +81,7 @@ pos = sig/loaded_vols
 
 # if given highs and lows
 
-def parkinson_volatility(high: pd.DataFrame, low: pd.DataFrame, scale=252) -> pd.DataFrame:
-    """
-    Parkinson volatility estimator using high-low range
-    More efficient than close-to-close estimator
-    """
-    log_hl = np.log(high/low)
-    vol = np.sqrt(scale/(4 * np.log(2)) * log_hl**2)
-    return vol
+''' o = prices_df[asset]['Open'].iloc[t - lookback:t]
+            h = prices_df[asset]['High'].iloc[t - lookback:t]
+            l = prices_df[asset]['Low'].iloc[t - lookback:t]
+            c = prices_df[asset]['Close'].iloc[t - lookback:t]'''

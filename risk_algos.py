@@ -6,7 +6,7 @@
 
 import pandas as pd
 import numpy as np
-
+import pickle
 
 # Use rolling cov matrix for more accurate risk
 def rolling_portfolio_vol(positions, returns, risk_window=100):
@@ -27,7 +27,7 @@ def rolling_portfolio_vol(positions, returns, risk_window=100):
     return pd.Series(port_vol, index=pnl.index)
 
 
-prices = pd.read_csv('example_prices.csv',index_col='dates',parse_dates=True)
+prices = pd.read_csv('close_prices_insample.csv',index_col='AsOfDate',parse_dates=True)
 ret = prices.diff()
 trend_window=50
 vol_window=100
@@ -40,6 +40,16 @@ sig = np.sign(ret.rolling(window=trend_window).sum())
 # scale with inverse vol to get pos
 pos = sig/vol
 model_risk = rolling_portfolio_vol(pos, ret, risk_window)
+
+# save model_risk in pickle
+with open('model_risk.pkl', 'wb') as f:
+    pickle.dump(model_risk, f)
+
+
+# load model_risk from pickle
+with open('model_risk.pkl', 'rb') as f:
+    model_risk = pickle.load(f)
+
 pos_adjusted = pos.div(model_risk, axis=0)
 
 
