@@ -27,7 +27,8 @@ def forward_looking_bias(ret):
     
 def main(): 
 
-    prices = pd.read_csv('example_prices.csv',index_col='dates',parse_dates=True)
+    prices = pd.read_csv('close_prices_insample.csv',index_col='AsOfDate',parse_dates=True)
+    print(prices.shape)
     ret = prices.diff()
     vol = np.sqrt((ret**2).rolling(window=100, min_periods=10).mean()).shift(1)
     norm_ret = ret/vol
