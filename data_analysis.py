@@ -141,7 +141,7 @@ def load_data(path = 'example_prices.csv'):
         price information for various assets.
     """
     print("Reading data from:", path)
-    prices = pd.read_csv(path, index_col='dates',parse_dates=True)
+    prices = pd.read_csv(path, index_col='AsOfDate',parse_dates=True)
     
     print("Shape of data:", prices.shape)
     # Dublicated Index 
@@ -165,3 +165,47 @@ def load_data(path = 'example_prices.csv'):
     return prices 
     
     
+def clean_dublicated_indices(df):
+    duplicates = df.index.duplicated().sum()
+    print(f"Duplicate dates found: {duplicates}")
+    df = df[~df.index.duplicated()]
+    return df
+
+def load_close_prices(path='close_prices_insample.csv'):
+    print("Loading closing prices from:", path)
+    df = pd.read_csv(path, index_col='AsOfDate', parse_dates=True)
+    df = clean_dublicated_indices(df)
+    df.sort_index(inplace=True)
+    return df
+
+def load_full_prices(path='prices_insample.csv'):
+    """
+    Loads prices_insample.csv, which has a two-row header:
+    Row 0: Asset name repeated
+    Row 1: Indicator (Open, High, Low, Close)
+    Then from Row 2 onward, the data.
+    
+    We parse it into a multi-index for columns and then flatten the columns.
+    We also parse the first column as the date index.
+    """
+    print("Loading multi-header full price data from:", path)
+    
+    # Note header=[0,1] means the first two rows are used for column names
+    # index_col=0 means the first column is used as the row index (dates)
+    df = pd.read_csv(path, header=[0,1], index_col=0, parse_dates=True)
+    
+    # Flatten the multi-index columns into single-level
+    # e.g., ("ganymede_bonds", "Open") → "ganymede_bonds_Open"
+    df.columns = [f"{upper}_{lower}" for upper, lower in df.columns]
+    
+    # Ensure the index is sorted
+    df.sort_index(inplace=True)
+    
+    print(f"Loaded {df.shape[0]} rows and {df.shape[1]} columns from {path}")
+    return df
+
+def load_macro_data(path='macro_data_insample.csv'):
+    print("Loading macro data from:", path)
+    df = pd.read_csv(path, index_col='AsOfDate', parse_dates=True)
+    df.sort_index(inplace=True)
+    return df
